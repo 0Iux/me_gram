@@ -224,6 +224,7 @@ class PostsFollowTests(TestCase):
                 'username': self.user_2.username
             }), follow=True
         )
+        cache.clear()
         very_new_count = Follow.objects.count()
         self.assertEqual(count_follows, very_new_count)
 

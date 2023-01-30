@@ -8,7 +8,7 @@ from django.conf import settings
 from django.urls import reverse
 from django import forms
 
-from posts.models import Group, Post, User
+from posts.models import Group, Post, User, Follow
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
@@ -18,19 +18,19 @@ class PostsPagesTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.user = User.objects.create_user(username='StasBasov')
+        cls.user = User.objects.create_user(username='auth')
         cls.group = Group.objects.create(
             title='Тестовая группа',
             slug='test',
             description='Тестовое описание',
         )
         cls.small_gif = (
-             b'\x47\x49\x46\x38\x39\x61\x02\x00'
-             b'\x01\x00\x80\x00\x00\x00\x00\x00'
-             b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
-             b'\x00\x00\x00\x2C\x00\x00\x00\x00'
-             b'\x02\x00\x01\x00\x00\x02\x02\x0C'
-             b'\x0A\x00\x3B'
+            b'\x47\x49\x46\x38\x39\x61\x02\x00'
+            b'\x01\x00\x80\x00\x00\x00\x00\x00'
+            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+            b'\x0A\x00\x3B'
         )
         cls.uploaded = SimpleUploadedFile(
             name='small.gif',
@@ -155,7 +155,7 @@ class PostsCacheTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.user = User.objects.create_user(username='StasBasov')
+        cls.user = User.objects.create_user(username='auth')
         cls.post = [Post(
             text=f'post {i}',
             author=cls.user,
@@ -185,3 +185,53 @@ class PostsCacheTests(TestCase):
         response_new = self.authorized_client.get(reverse('posts:index'))
         new_posts = response_new.content
         self.assertNotEqual(old_posts, new_posts)
+
+
+class PostsFollowTests(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = User.objects.create_user(username='auth')
+        cls.user_2 = User.objects.create_user(username='nikita')
+        cls.post = [Post(
+            text=f'post {i}',
+            author=cls.user_2,
+        ) for i in range(1, 3)]
+        Post.objects.bulk_create(cls.post)
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        cache.clear()
+
+    def setUp(self):
+        self.authorized_client = Client()
+        self.authorized_client.force_login(self.user)
+        self.user_for_following = Client()
+        self.user_for_following.force_login(self.user_2)
+
+    def test_user_can_follow(self):
+        count_follows = Follow.objects.count()
+        self.authorized_client.get(
+            reverse('posts:profile_follow', kwargs={
+                'username': self.user_2.username
+            }), follow=True
+        )
+        new_count_follows = Follow.objects.count()
+        self.assertNotEqual(count_follows, new_count_follows)
+        self.authorized_client.get(
+            reverse('posts:profile_unfollow', kwargs={
+                'username': self.user_2.username
+            }), follow=True
+        )
+        very_new_count = Follow.objects.count()
+        self.assertEqual(count_follows, very_new_count)
+
+    def test_follows_post_in_index(self):
+        self.authorized_client.get(
+            reverse('posts:profile_follow', kwargs={
+                'username': self.user_2.username
+            }), follow=True
+        )
+        response = self.authorized_client.get(reverse('posts:follow_index'))
+        self.assertEqual(len(response.context['page_obj']), 2)

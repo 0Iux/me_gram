@@ -29,7 +29,7 @@ QUANTITY_LETERS_FOR_STR = 27
 SECRET_KEY = 'uyp%)@o&8f-nj)msk=da#83wfi&#4*u-k4(uanw)inei626zl&'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 CSRF_FAILURE_VIEW = 'core.views.csrf_failure'
 
@@ -143,7 +143,6 @@ USE_L10N = True
 
 USE_TZ = True
 
- 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 

@@ -77,7 +77,11 @@ class PostsPagesTests(TestCase):
             'posts/create_post.html': (
                 'posts:post_edit', {'post_id': Post.objects.last().pk}
             ),
+            'posts/follow.html': (
+                'posts:follow_index', 0
+            ),
         }
+        self.const_count_1 = 1
 
     def test_pages_uses_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
@@ -135,13 +139,14 @@ class PostsPagesTests(TestCase):
                 )
                 if response.context.get('page_obj'):
                     self.assertEqual(
-                        len(response.context['page_obj']), 10
+                        len(response.context['page_obj']),
+                        settings.QUANTITY_POSTS
                     )
                     response = self.authorized_client.get(
                         reverse('posts:index') + '?page=2'
                     )
                     self.assertEqual(
-                        len(response.context['page_obj']), 1
+                        len(response.context['page_obj']), self.const_count_1
                     )
 
     def test_group_without_posts(self):
@@ -170,21 +175,26 @@ class PostsCacheTests(TestCase):
     def setUp(self):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
+        self.revers_pages = {
+            ('posts:index', 0): 'posts/index.html'
+        }
 
     def test_cache_index(self):
-        response = self.authorized_client.get(reverse('posts:index'))
-        posts = response.content
-        Post.objects.create(
-            text='test_new_post',
-            author=self.user,
-        )
-        response_old = self.authorized_client.get(reverse('posts:index'))
-        old_posts = response_old.content
-        self.assertEqual(old_posts, posts)
-        cache.clear()
-        response_new = self.authorized_client.get(reverse('posts:index'))
-        new_posts = response_new.content
-        self.assertNotEqual(old_posts, new_posts)
+        for page in self.revers_pages.keys():
+            with self.subTest(page=page):
+                response = self.authorized_client.get(reverse(page[0]))
+                posts = response.content
+                Post.objects.create(
+                    text='test_new_post',
+                    author=self.user,
+                )
+                response_old = self.authorized_client.get(reverse(page[0]))
+                old_posts = response_old.content
+                self.assertEqual(old_posts, posts)
+                cache.clear()
+                response_new = self.authorized_client.get(reverse(page[0]))
+                new_posts = response_new.content
+                self.assertNotEqual(old_posts, new_posts)
 
 
 class PostsFollowTests(TestCase):
@@ -209,29 +219,40 @@ class PostsFollowTests(TestCase):
         self.authorized_client.force_login(self.user)
         self.user_for_following = Client()
         self.user_for_following.force_login(self.user_2)
+        self.follow_func = (
+            ('posts:profile_follow', {
+                'username': self.user_2.username
+            }),
+            ('posts:profile_unfollow', {
+                'username': self.user_2.username
+            }),
+        )
 
     def test_user_can_follow(self):
         count_follows = Follow.objects.count()
         self.authorized_client.get(
-            reverse('posts:profile_follow', kwargs={
-                'username': self.user_2.username
-            }), follow=True
+            reverse(
+                self.follow_func[0][0],
+                kwargs=self.follow_func[0][1]
+            ), follow=True
         )
         new_count_follows = Follow.objects.count()
         self.assertNotEqual(count_follows, new_count_follows)
         self.authorized_client.get(
-            reverse('posts:profile_unfollow', kwargs={
-                'username': self.user_2.username
-            }), follow=True
+            reverse(
+                self.follow_func[1][0],
+                kwargs=self.follow_func[1][1]
+            ), follow=True
         )
         very_new_count = Follow.objects.count()
         self.assertEqual(count_follows, very_new_count)
 
     def test_follows_post_in_index(self):
         self.authorized_client.get(
-            reverse('posts:profile_follow', kwargs={
-                'username': self.user_2.username
-            }), follow=True
+            reverse(
+                self.follow_func[0][0],
+                kwargs=self.follow_func[0][1]
+            ), follow=True
         )
         response = self.authorized_client.get(reverse('posts:follow_index'))
         self.assertEqual(len(response.context['page_obj']), 2)

@@ -8,7 +8,7 @@ class PostURLTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.user = User.objects.create_user(username='HasNoName')
+        cls.user = User.objects.create_user(username='auth')
         cls.group = Group.objects.create(
             title='Тестовая группа',
             slug='test',
@@ -33,6 +33,7 @@ class PostURLTests(TestCase):
         self.private_url = {
             '/create/': 'posts/create_post.html',
             f'/posts/{self.post.pk}/edit/': 'posts/create_post.html',
+            '/follow/': 'posts/follow.html',
         }
 
     def test_post_urls_uses_correct_template(self):

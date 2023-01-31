@@ -148,7 +148,6 @@ class PostCommentTests(TestCase):
         ) + '?next=' + reverse(
             'posts:add_comment', kwargs={'post_id': self.post.pk}
         ) + '%3Ftext%3D' + form_data['text'])
-        pass
 
     def test_create_comments(self):
         form_data = {'text': 'commentssssssss'}

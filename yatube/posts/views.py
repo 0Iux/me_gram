@@ -37,12 +37,9 @@ def profile(request, username):
     post_list = author.posts.all()
     page_obj = pagination(request, post_list)
     if request.user.is_authenticated:
-        if not Follow.objects.filter(
+        following = Follow.objects.filter(
             user=request.user, author=author
-        ):
-            following = False
-        else:
-            following = True
+        ).exists()
     else:
         following = False
     return render(request, 'posts/profile.html', {
@@ -112,10 +109,7 @@ def add_comment(request, post_id):
 
 @login_required
 def follow_index(request):
-    user = request.user
-    following = Follow.objects.filter(user=user)
-    following_authors = [f.author for f in following]
-    post_list = Post.objects.filter(author__in=following_authors)
+    post_list = Post.objects.filter(author__following__user=request.user)
     page_obj = pagination(request, post_list)
     context = {'page_obj': page_obj}
     return render(request, 'posts/follow.html', context)
@@ -123,19 +117,17 @@ def follow_index(request):
 
 @login_required
 def profile_follow(request, username):
-    user = request.user
-    author = User.objects.get(username=username)
-    if user != author:
-        if not Follow.objects.filter(user=user, author=author):
-            Follow.objects.create(user=user, author=author)
+    author = get_object_or_404(User, username=username)
+    if request.user != author:
+        if not Follow.objects.filter(user=request.user, author=author):
+            Follow.objects.create(user=request.user, author=author)
     return redirect('posts:profile', username=author.username)
 
 
 @login_required
 def profile_unfollow(request, username):
     author = get_object_or_404(User, username=username)
-    user = request.user
-    follow = Follow.objects.filter(user=user, author=author)
-    if follow:
+    follow = Follow.objects.filter(user=request.user, author=author)
+    if follow.exists:
         follow.delete()
     return redirect('posts:profile', username=author.username)

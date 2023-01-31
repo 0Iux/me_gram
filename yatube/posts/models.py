@@ -43,13 +43,13 @@ class Post(models.Model):
         blank=True
     )
 
-    def __str__(self):
-        return self.text[:settings.QUANTITY_LETERS_FOR_STR]
-
     class Meta:
         ordering = ['-pub_date']
         verbose_name = 'Пост'
         verbose_name_plural = 'Посты'
+
+    def __str__(self):
+        return self.text[:settings.QUANTITY_LETERS_FOR_STR]
 
 
 class Comment(models.Model):
@@ -60,19 +60,24 @@ class Comment(models.Model):
     )
     author = models.ForeignKey(
         User,
+        verbose_name='Автор комментария',
         on_delete=models.CASCADE,
         related_name='comments',
-        verbose_name='Автор'
     )
     post = models.ForeignKey(
         Post,
+        verbose_name='К какому посту',
         on_delete=models.CASCADE,
         related_name='comments',
-        verbose_name='Пост'
     )
 
     class Meta:
         ordering = ['-created']
+        verbose_name = 'Комментарий',
+        verbose_name_plural = 'Коментарии'
+
+    def __str__(self):
+        return self.text[:settings.QUANTITY_LETERS_FOR_STR]
 
 
 class Follow(models.Model):
@@ -88,3 +93,8 @@ class Follow(models.Model):
         related_name='following',
         verbose_name='Автор'
     )
+
+    class Meta:
+        verbose_name_plural = 'Подписки'
+        unique_together = ('user', 'author')
+        unique_together = ['user', 'author']

@@ -7,7 +7,19 @@
   <h1>{{ group.title }}</h1>
   <p>{{ group.description|safe }}</p>
   {% for post in page_obj %}
-  {% include 'posts/includes/post_list.html' %}
+    <ul>
+      <li>
+        Автор: {{ post.author.get_full_name }}
+      </li>
+      <li>
+        Дата публикации: {{ post.pub_date|date:"d E Y" }}
+      </li>
+      <p>{{ post.text }}</p>  
+    </article>
+    <hr>
+    <article>
+    </ul>
+  </div> 
   {% endfor %} 
   {% include 'posts/includes/paginator.html' %}
 {% endblock %} 

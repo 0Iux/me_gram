@@ -1,11 +1,14 @@
 {% extends 'base.html' %}
 {% load thumbnail %}
 {% block title %}
-Лента подписок
+    Лента подписок
 {% endblock %}
 {% block content %}
-{% include 'posts/includes/switcher.html' %}
-<h1>Ваша лента подписок</h1>
-{% include 'posts/includes/post_list.html' %}
-{% include 'posts/includes/paginator.html' %}
+    {% include 'posts/includes/switcher.html' %}
+    <h1>Ваша лента подписок</h1>
+    {% load thumbnail %} 
+    {% for postq in page_obj %} 
+        {% include 'posts/includes/post_list.html' %}
+    {%endfor%}
+    {% include 'posts/includes/paginator.html' %}
 {% endblock %}

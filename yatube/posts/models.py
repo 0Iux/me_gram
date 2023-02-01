@@ -10,6 +10,10 @@ class Group(models.Model):
     slug = models.SlugField(unique=True, verbose_name='Слоган')
     description = models.TextField(verbose_name='Описание')
 
+    class Meta:
+        verbose_name = 'Группа'
+        verbose_name_plural = 'Группы'
+
     def __str__(self):
         return self.title
 
@@ -96,5 +100,12 @@ class Follow(models.Model):
 
     class Meta:
         verbose_name_plural = 'Подписки'
-        unique_together = ('user', 'author')
-        unique_together = ['user', 'author']
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q('user' != 'author'),
+                name='user_not_author'
+            ),
+            models.UniqueConstraint(
+                fields=['user', 'author'], name='unique_user_author'
+            ),
+        ]

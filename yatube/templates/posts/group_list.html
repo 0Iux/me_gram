@@ -1,25 +1,13 @@
 {% extends 'base.html' %}
 {% block title %}
-{{ group.title }}
+  {{ group.title }}
 {% endblock %}
 {% block content %}
   <div class="container py-5">
   <h1>{{ group.title }}</h1>
   <p>{{ group.description|safe }}</p>
-  {% for post in page_obj %}
-    <ul>
-      <li>
-        Автор: {{ post.author.get_full_name }}
-      </li>
-      <li>
-        Дата публикации: {{ post.pub_date|date:"d E Y" }}
-      </li>
-      <p>{{ post.text }}</p>  
-    </article>
-    <hr>
-    <article>
-    </ul>
-  </div> 
-  {% endfor %} 
+  {% for postq in page_obj %} 
+    {% include 'posts/includes/post_list.html' %}
+  {%endfor%}
   {% include 'posts/includes/paginator.html' %}
 {% endblock %} 
